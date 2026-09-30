@@ -70,5 +70,5 @@ npx expo run:android
 
 ## 👨‍💻 Geliştirici
 
-**Nihat Yazgan** — Yazgan Bileşim  
+**Nihat Yazgan** — Yazgan Bilişim  
 GitHub: [@nihatyazgan1962](https://github.com/nihatyazgan1962)
