@@ -8,7 +8,12 @@ import { sleepTimer } from '@/utils/sleepTimer';
 interface CustomChannel {
   id: string;
   name: string;
+  title?: string;
+  subtitle?: string;
   url: string;
+  category?: string;
+  quality?: string;
+  isCustom?: boolean;
 }
 
 interface SavedRecording {
@@ -20,12 +25,13 @@ interface SavedRecording {
 }
 
 export default function AyarlarScreen() {
-  const [channelType, setChannelType] = useState<'radio' | 'tv'>('radio');
+  const [channelType, setChannelType] = useState<'radio' | 'tv' | 'mp4'>('radio');
   const [channelName, setChannelName] = useState('');
   const [channelUrl, setChannelUrl] = useState('');
 
   const [customRadios, setCustomRadios] = useState<CustomChannel[]>([]);
   const [customTvs, setCustomTvs] = useState<CustomChannel[]>([]);
+  const [customMp4s, setCustomMp4s] = useState<CustomChannel[]>([]);
   const [savedRecordings, setSavedRecordings] = useState<SavedRecording[]>([]);
 
   const [playingUri, setPlayingUri] = useState<string | null>(null);
@@ -40,6 +46,9 @@ export default function AyarlarScreen() {
 
       const tvs = await AsyncStorage.getItem('customTvChannels');
       if (tvs) setCustomTvs(JSON.parse(tvs));
+
+      const mp4s = await AsyncStorage.getItem('customMp4Videos');
+      if (mp4s) setCustomMp4s(JSON.parse(mp4s));
 
       const recs = await AsyncStorage.getItem('savedVoiceRecordings');
       if (recs) setSavedRecordings(JSON.parse(recs));
@@ -67,12 +76,22 @@ export default function AyarlarScreen() {
 
   const addChannel = async () => {
     if (!channelName.trim() || !channelUrl.trim()) {
-      Alert.alert('Hata', 'Lütfen kanal adı ve yayın linkini giriniz.');
+      Alert.alert('Hata', 'Lütfen kanal/video adı ve yayın linkini giriniz.');
       return;
     }
 
-    const storageKey = channelType === 'radio' ? 'customChannels' : 'customTvChannels';
-    const idPrefix = channelType === 'radio' ? 'custom_radio_' : 'custom_tv_';
+    const storageKey =
+      channelType === 'radio'
+        ? 'customChannels'
+        : channelType === 'tv'
+          ? 'customTvChannels'
+          : 'customMp4Videos';
+    const idPrefix =
+      channelType === 'radio'
+        ? 'custom_radio_'
+        : channelType === 'tv'
+          ? 'custom_tv_'
+          : 'custom_mp4_';
 
     try {
       const existing = await AsyncStorage.getItem(storageKey);
@@ -80,18 +99,27 @@ export default function AyarlarScreen() {
       const newChan: CustomChannel = {
         id: idPrefix + Date.now().toString(),
         name: channelName.trim(),
+        title: channelName.trim(),
+        subtitle: 'Özel MP4 Video • Doğrudan Akış',
         url: channelUrl.trim(),
+        category: channelType === 'mp4' ? 'Özel MP4' : 'Genel',
+        quality: 'HD MP4',
+        isCustom: true,
       };
       list.unshift(newChan);
       await AsyncStorage.setItem(storageKey, JSON.stringify(list));
 
       if (channelType === 'radio') {
         setCustomRadios(list);
-      } else {
+      } else if (channelType === 'tv') {
         setCustomTvs(list);
+      } else {
+        setCustomMp4s(list);
       }
 
-      Alert.alert('Başarılı', `${channelType === 'radio' ? 'Radyo' : 'TV'} kanalı başarıyla eklendi.`);
+      const typeLabel =
+        channelType === 'radio' ? 'Radyo' : channelType === 'tv' ? 'TV' : 'MP4 Video';
+      Alert.alert('Başarılı', `${typeLabel} başarıyla eklendi.`);
       setChannelName('');
       setChannelUrl('');
     } catch (e) {
@@ -99,9 +127,14 @@ export default function AyarlarScreen() {
     }
   };
 
-  const deleteChannel = async (id: string, type: 'radio' | 'tv') => {
-    const storageKey = type === 'radio' ? 'customChannels' : 'customTvChannels';
-    Alert.alert('Kanalı Sil', 'Bu kanalı silmek istediğinize emin misiniz?', [
+  const deleteChannel = async (id: string, type: 'radio' | 'tv' | 'mp4') => {
+    const storageKey =
+      type === 'radio'
+        ? 'customChannels'
+        : type === 'tv'
+          ? 'customTvChannels'
+          : 'customMp4Videos';
+    Alert.alert('Kaydı Sil', 'Bu kaydı silmek istediğinize emin misiniz?', [
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Sil',
@@ -113,7 +146,8 @@ export default function AyarlarScreen() {
               const list: CustomChannel[] = JSON.parse(existing).filter((c: CustomChannel) => c.id !== id);
               await AsyncStorage.setItem(storageKey, JSON.stringify(list));
               if (type === 'radio') setCustomRadios(list);
-              else setCustomTvs(list);
+              else if (type === 'tv') setCustomTvs(list);
+              else setCustomMp4s(list);
             }
           } catch (e) {}
         },
@@ -189,11 +223,11 @@ export default function AyarlarScreen() {
           </View>
         </View>
         <Text style={styles.guideSummaryDesc}>
-          Türkiye'nin tüm ulusal, haber, dini, bölgesel canlı TV kanalları, kesintisiz radyoları ve Kur'an-ı Kerim tilavetleri tek bir rehberde.
+          Türkiye'nin tüm ulusal, haber, dini, bölgesel canlı TV kanalları (M3U8), kesintisiz radyoları (MP3/AAC), görüntülü MP4 video arşivi ve Kur'an-ı Kerim tilavetleri tek bir Android APK rehberinde.
         </Text>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>75+</Text>
+            <Text style={styles.statNumber}>80+</Text>
             <Text style={styles.statLabel}>Canlı TV</Text>
           </View>
           <View style={styles.statItem}>
@@ -201,8 +235,8 @@ export default function AyarlarScreen() {
             <Text style={styles.statLabel}>Canlı Radyo</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>23+</Text>
-            <Text style={styles.statLabel}>Seçkin Kâri</Text>
+            <Text style={styles.statNumber}>MP4</Text>
+            <Text style={styles.statLabel}>Video HD</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>114</Text>
@@ -268,17 +302,17 @@ export default function AyarlarScreen() {
       
       {/* Section 1: Kanal Ekle */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>➕ Yeni Kanal Ekle</Text>
-        <Text style={styles.cardDesc}>Uygulamaya kendi canlı radyo veya TV yayın linkinizi ekleyebilirsiniz.</Text>
+        <Text style={styles.cardTitle}>➕ Yeni Kanal veya MP4 Video Ekle</Text>
+        <Text style={styles.cardDesc}>Uygulamaya kendi canlı radyo (mp3/aac), TV (m3u8) veya MP4 video (.mp4) linkinizi ekleyebilirsiniz.</Text>
 
-        {/* Radio / TV Selector */}
+        {/* Radio / TV / MP4 Selector */}
         <View style={styles.typeSelector}>
           <Pressable
             style={[styles.typeBtn, channelType === 'radio' && styles.typeBtnActive]}
             onPress={() => setChannelType('radio')}
           >
             <Text style={[styles.typeBtnText, channelType === 'radio' && styles.typeBtnTextActive]}>
-              📻 Radyo Kanalı
+              📻 Radyo
             </Text>
           </Pressable>
           <Pressable
@@ -286,21 +320,29 @@ export default function AyarlarScreen() {
             onPress={() => setChannelType('tv')}
           >
             <Text style={[styles.typeBtnText, channelType === 'tv' && styles.typeBtnTextActive]}>
-              📺 TV Kanalı
+              📺 Canlı TV
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.typeBtn, channelType === 'mp4' && styles.typeBtnActive]}
+            onPress={() => setChannelType('mp4')}
+          >
+            <Text style={[styles.typeBtnText, channelType === 'mp4' && styles.typeBtnTextActive]}>
+              🎬 MP4 Video
             </Text>
           </Pressable>
         </View>
 
         <TextInput
           style={styles.input}
-          placeholder="Kanal Adı (Örn: Özel Radyom)"
+          placeholder="Kanal veya Video Adı (Örn: Özel MP4 Videom)"
           placeholderTextColor="#888"
           value={channelName}
           onChangeText={setChannelName}
         />
         <TextInput
           style={styles.input}
-          placeholder="Yayın Linki (URL: m3u8 veya mp3)"
+          placeholder="Yayın Linki (URL: .mp4, .m3u8 veya .mp3)"
           placeholderTextColor="#888"
           value={channelUrl}
           onChangeText={setChannelUrl}
@@ -308,13 +350,13 @@ export default function AyarlarScreen() {
           autoCorrect={false}
         />
         <Pressable style={styles.saveBtn} onPress={addChannel}>
-          <Text style={styles.saveBtnText}>Kanalı Kaydet</Text>
+          <Text style={styles.saveBtnText}>Kaydet</Text>
         </Pressable>
       </View>
 
       {/* Section 2: Eklenen Kanallar */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>📋 Eklediğiniz Özel Kanallar</Text>
+        <Text style={styles.cardTitle}>📋 Eklediğiniz Özel Kanallar & MP4 Videolar</Text>
         
         <Text style={styles.subHeader}>📻 Özel Radyolar ({customRadios.length})</Text>
         {customRadios.length === 0 ? (
@@ -338,6 +380,20 @@ export default function AyarlarScreen() {
             <View key={t.id} style={styles.customRow}>
               <Text style={styles.customName}>{t.name}</Text>
               <Pressable style={styles.deleteBtn} onPress={() => deleteChannel(t.id, 'tv')}>
+                <Text style={styles.deleteBtnText}>Sil</Text>
+              </Pressable>
+            </View>
+          ))
+        )}
+
+        <Text style={[styles.subHeader, { marginTop: 15 }]}>🎬 Özel MP4 Videolar ({customMp4s.length})</Text>
+        {customMp4s.length === 0 ? (
+          <Text style={styles.emptyNotice}>Henüz eklenmiş özel MP4 video yok.</Text>
+        ) : (
+          customMp4s.map((m) => (
+            <View key={m.id} style={styles.customRow}>
+              <Text style={styles.customName}>{m.title || m.name}</Text>
+              <Pressable style={styles.deleteBtn} onPress={() => deleteChannel(m.id, 'mp4')}>
                 <Text style={styles.deleteBtnText}>Sil</Text>
               </Pressable>
             </View>

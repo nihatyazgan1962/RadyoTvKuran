@@ -3,7 +3,7 @@
     "name": "Radyo TV Kuran",
     "slug": "radyo-tv-kuran",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "radyotvkuran",
     "userInterfaceStyle": "automatic",

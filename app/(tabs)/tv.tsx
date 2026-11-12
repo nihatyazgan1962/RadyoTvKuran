@@ -11,7 +11,7 @@ interface TvStation {
   id: string;
   name: string;
   url: string;
-  category: 'Ulusal' | 'Bölgesel' | 'Haber' | 'İslami' | 'Spor' | 'Çocuk' | 'Genel';
+  category: 'Ulusal' | 'Bölgesel' | 'Haber' | 'İslami' | 'Spor' | 'Çocuk' | 'MP4 Video' | 'Genel';
   isCustom?: boolean;
 }
 
@@ -112,11 +112,20 @@ const defaultTvStations: TvStation[] = [
   // --- ÇOCUK & EĞİTİM KANALLARI ---
   { id: 'tv_cocuk_1', name: 'TRT DİYANET ÇOCUK HD', url: 'https://tv-trtdiyanetcocuk.medya.trt.com.tr/master.m3u8', category: 'Çocuk' },
   { id: 'tv_cocuk_2', name: 'TRT ÇOCUK HD', url: 'https://tv-trtcocuk.medya.trt.com.tr/master.m3u8', category: 'Çocuk' },
+
+  // --- MP4 VİDEO & BELGESEL AKIŞLARI ---
+  { id: 'tv_mp4_1', name: '112. İhlâs Sûresi Görüntülü Tilavet (MP4)', url: 'https://archive.org/download/youtube-0wWGJ_GZzQw/0wWGJ_GZzQw.mp4', category: 'MP4 Video' },
+  { id: 'tv_mp4_2', name: 'En\'âm Sûresi Görüntülü - Hani Ar-Rifai (MP4)', url: 'https://archive.org/download/youtube-lHT14tuaGRE/lHT14tuaGRE.mp4', category: 'MP4 Video' },
+  { id: 'tv_mp4_3', name: '17. İsrâ Sûresi Görüntülü Tilavet (MP4)', url: 'https://archive.org/download/youtube-v0ckopz6q4Y/v0ckopz6q4Y.mp4', category: 'MP4 Video' },
+  { id: 'tv_mp4_4', name: 'Kâbe-i Muazzama Namaz - Sudeysi (MP4)', url: 'https://archive.org/download/January152011MakkahMaghrib/SheikhSudais_Maghrib_1-15-11_512kb.mp4', category: 'MP4 Video' },
+  { id: 'tv_mp4_5', name: 'Okyanus & Kâinat Tefekkür Belgeseli (MP4)', url: 'https://vjs.zencdn.net/v/oceans.mp4', category: 'MP4 Video' },
+  { id: 'tv_mp4_6', name: 'Doğa & Çiçekler HD Manzara (MP4)', url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', category: 'MP4 Video' },
 ];
 
 export default function TvScreen() {
   const [stations, setStations] = useState<TvStation[]>(defaultTvStations);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tümü');
+  const [categoriesVisible, setCategoriesVisible] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [selectedStation, setSelectedStation] = useState<TvStation | null>(null);
 
@@ -187,11 +196,13 @@ export default function TvScreen() {
     try {
       const stored = await AsyncStorage.getItem('customTvChannels');
       const custom: TvStation[] = stored ? JSON.parse(stored) : [];
+      const cleanUrl = newChannelUrl.trim();
+      const isMp4Url = cleanUrl.toLowerCase().includes('.mp4');
       const newChan: TvStation = {
         id: 'custom_tv_' + Date.now().toString(),
         name: newChannelName.trim(),
-        url: newChannelUrl.trim(),
-        category: 'Genel',
+        url: cleanUrl,
+        category: isMp4Url ? 'MP4 Video' : 'Genel',
         isCustom: true,
       };
       custom.unshift(newChan);
@@ -200,7 +211,7 @@ export default function TvScreen() {
       setNewChannelName('');
       setNewChannelUrl('');
       setModalVisible(false);
-      Alert.alert('Başarılı', 'TV kanalı listenize eklendi.');
+      Alert.alert('Başarılı', isMp4Url ? 'MP4 video kanalı listenize eklendi.' : 'TV kanalı listenize eklendi.');
     } catch (e) {
       Alert.alert('Hata', 'Kanal eklenemedi.');
     }
@@ -281,7 +292,8 @@ export default function TvScreen() {
   };
 
   const categories = [
-    { key: 'Tümü', label: 'Tüm Canlı TV Kanalları', icon: '📺', desc: 'Ulusal, Bölgesel ve Tematik 75+ Canlı Kanal' },
+    { key: 'Tümü', label: 'Tüm Canlı TV & MP4 Kanalları', icon: '📺', desc: 'Ulusal, Bölgesel, Tematik Canlı TV ve MP4 Yayınlar' },
+    { key: 'MP4 Video', label: '🎬 MP4 Video & Görüntülü Yayınlar', icon: '🎬', desc: "Kur'an Tilaveti, Belgesel, Doğa ve Özel MP4 Videoları" },
     { key: 'Ulusal', label: '🇹🇷 Ulusal Kanallar (TR)', icon: '📡', desc: 'TRT 1, ATV, Show TV, Star, TV8, Kanal 7, NOW...' },
     { key: 'Haber', label: '📰 Haber & Gündem TV', icon: '🎙️', desc: 'TRT Haber, A Haber, NTV, Habertürk, CNN Türk, TVNET...' },
     { key: 'İslami', label: '🕌 Dini & Tasavvuf TV', icon: '🌙', desc: 'Mekke & Medine Canlı, Diyanet TV, Vav TV, Semerkand...' },
@@ -289,6 +301,11 @@ export default function TvScreen() {
     { key: 'Spor', label: '⚽ Spor & Müzik TV', icon: '🏆', desc: 'TRT Spor, Belgesel, Power TV, Kral Pop, Dream Türk...' },
     { key: 'Çocuk', label: '👶 Çocuk & Aile TV', icon: '🎨', desc: 'TRT Çocuk, TRT Diyanet Çocuk, Minika...' },
   ];
+
+  const isSelectedMp4 = Boolean(
+    selectedStation &&
+      (selectedStation.category === 'MP4 Video' || selectedStation.url.toLowerCase().includes('.mp4'))
+  );
 
   const filteredStations = selectedCategory
     ? stations.filter((s) => {
@@ -314,15 +331,15 @@ export default function TvScreen() {
             <View style={styles.playerOverlay}>
               {/* Top Controls Bar */}
               <View style={styles.playerOverlayTop}>
-                <View style={styles.liveBadge}>
+                <View style={[styles.liveBadge, isSelectedMp4 && { backgroundColor: '#7C3AED' }]}>
                   <View style={styles.livePulseDot} />
-                  <Text style={styles.liveBadgeText}>CANLI</Text>
+                  <Text style={styles.liveBadgeText}>{isSelectedMp4 ? 'MP4 VIDEO' : 'CANLI'}</Text>
                 </View>
-                <Text style={styles.nowPlayingText} numberOfLines={1}>
+                <Text style={[styles.nowPlayingText, { flex: 1 }]} numberOfLines={1}>
                   {selectedStation.name}
                 </Text>
                 <View style={styles.hdBadge}>
-                  <Text style={styles.hdBadgeText}>HD</Text>
+                  <Text style={styles.hdBadgeText}>{isSelectedMp4 ? 'MP4 HD' : 'HD'}</Text>
                 </View>
               </View>
 
@@ -331,6 +348,18 @@ export default function TvScreen() {
                 <Pressable style={styles.zapBtn} onPress={playPrevChannel}>
                   <Text style={styles.zapBtnText}>⏮️ Önceki</Text>
                 </Pressable>
+                {isSelectedMp4 && (
+                  <Pressable
+                    style={styles.zapBtn}
+                    onPress={() => {
+                      try {
+                        player.seekBy(-15);
+                      } catch {}
+                    }}
+                  >
+                    <Text style={styles.zapBtnText}>-15sn</Text>
+                  </Pressable>
+                )}
                 <Pressable 
                   style={styles.zapCenterPlayBtn} 
                   onPress={() => {
@@ -343,6 +372,18 @@ export default function TvScreen() {
                 >
                   <Text style={styles.zapCenterPlayText}>{player.playing ? '⏸' : '▶'}</Text>
                 </Pressable>
+                {isSelectedMp4 && (
+                  <Pressable
+                    style={styles.zapBtn}
+                    onPress={() => {
+                      try {
+                        player.seekBy(15);
+                      } catch {}
+                    }}
+                  >
+                    <Text style={styles.zapBtnText}>+15sn</Text>
+                  </Pressable>
+                )}
                 <Pressable style={styles.zapBtn} onPress={playNextChannel}>
                   <Text style={styles.zapBtnText}>Sonraki ⏭️</Text>
                 </Pressable>
@@ -370,8 +411,22 @@ export default function TvScreen() {
       {/* Video Player (Her Zaman Üstte Yer Alır) */}
       {renderPlayer()}
 
-      {/* DURUM 1: Ana Ekranda Sadece Kategoriler Görünür */}
-      {!selectedCategory ? (
+      {/* Kategori Aç / Kapat Düğmesi (Varsayılan Olarak Gizli, Tıklanınca Açılır) */}
+      <View style={styles.categoryListHeader}>
+        <Pressable
+          style={styles.backToCategoriesBtn}
+          onPress={() => setCategoriesVisible(!categoriesVisible)}
+        >
+          <Text style={styles.backToCategoriesText}>
+            {categoriesVisible ? '▴ Kategorileri Gizle' : '📂 Kategoriler (Tıkla Aç ▾)'}
+          </Text>
+          <Text style={styles.currentCategoryBadge}>
+            {selectedCatObj.icon} {selectedCatObj.label}
+          </Text>
+        </Pressable>
+      </View>
+
+      {categoriesVisible ? (
         <FlatList
           data={categories}
           keyExtractor={(item) => item.key}
@@ -379,7 +434,7 @@ export default function TvScreen() {
           ListHeaderComponent={
             <View style={styles.categoryMenuHeader}>
               <Text style={styles.categoryMenuTitle}>📑 TV KATEGORİLERİ</Text>
-              <Text style={styles.categoryMenuSubtitle}>İzlemek istediğiniz kanallar için bir kategori seçin:</Text>
+              <Text style={styles.categoryMenuSubtitle}>İzlemek istediğiniz kanallar için bir kategoriye tıklayın:</Text>
             </View>
           }
           renderItem={({ item: cat }) => {
@@ -389,7 +444,10 @@ export default function TvScreen() {
             return (
               <Pressable
                 style={styles.categoryMenuCard}
-                onPress={() => setSelectedCategory(cat.key)}
+                onPress={() => {
+                  setSelectedCategory(cat.key);
+                  setCategoriesVisible(false);
+                }}
               >
                 <View style={styles.categoryMenuLeft}>
                   <Text style={styles.categoryMenuIcon}>{cat.icon}</Text>
@@ -406,25 +464,12 @@ export default function TvScreen() {
           }}
         />
       ) : (
-        /* DURUM 2: Bir Kategoriye Tıklandığında Kanal Listesi Görünür */
         <FlatList
           data={filteredStations}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 32 }}
           ListHeaderComponent={
             <View style={styles.categoryListHeader}>
-              {/* Back to Categories Button */}
-              <Pressable 
-                style={styles.backToCategoriesBtn} 
-                onPress={() => {
-                  setSelectedCategory(null);
-                  setSearchQuery('');
-                }}
-              >
-                <Text style={styles.backToCategoriesText}>‹ Kategorilere Dön</Text>
-                <Text style={styles.currentCategoryBadge}>{selectedCatObj.icon} {selectedCatObj.label}</Text>
-              </Pressable>
-
               {/* Search Bar */}
               <TextInput
                 style={styles.channelSearchInput}
@@ -488,17 +533,17 @@ export default function TvScreen() {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Yeni TV Kanalı Ekle</Text>
+            <Text style={styles.modalTitle}>Yeni TV veya MP4 Kanalı Ekle</Text>
             <TextInput
               style={styles.input}
-              placeholder="Kanal Adı (Örn: Hilal TV)"
+              placeholder="Kanal / Video Adı (Örn: Hilal TV veya Belgesel MP4)"
               placeholderTextColor="#888"
               value={newChannelName}
               onChangeText={setNewChannelName}
             />
             <TextInput
               style={styles.input}
-              placeholder="Yayın Linki (m3u8 URL)"
+              placeholder="Yayın Linki (.m3u8 veya .mp4 URL)"
               placeholderTextColor="#888"
               value={newChannelUrl}
               onChangeText={setNewChannelUrl}

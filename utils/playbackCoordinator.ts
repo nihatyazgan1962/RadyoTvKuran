@@ -1,4 +1,4 @@
-type PlaybackSource = 'tv' | 'radio' | 'quran' | 'recording';
+type PlaybackSource = 'tv' | 'radio' | 'quran' | 'recording' | 'mp4';
 
 type StopCallback = () => void;
 

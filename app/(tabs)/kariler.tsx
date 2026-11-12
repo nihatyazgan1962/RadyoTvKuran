@@ -9,7 +9,8 @@ import RadioChassisPlayer from '@/components/RadioChassisPlayer';
 type PlayMode = 'sequence' | 'loopOne' | 'loopAll' | 'shuffle';
 
 export default function KarilerScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<'Tümü' | 'TR' | 'HUZUR' | 'WORLD' | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<'Tümü' | 'TR' | 'HUZUR' | 'WORLD'>('Tümü');
+  const [categoriesVisible, setCategoriesVisible] = useState(false);
   const [selectedQari, setSelectedQari] = useState<Qari>(qarisList[0]);
   const [selectedSurah, setSelectedSurah] = useState<Surah>(surahsList[0]);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
@@ -317,20 +318,6 @@ export default function KarilerScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerComponentContainer}>
-      {/* Back to Categories Button */}
-      <View style={styles.categoryListHeader}>
-        <Pressable 
-          style={styles.backToCategoriesBtn} 
-          onPress={() => {
-            setSelectedCategory(null);
-            setSearchQuery('');
-          }}
-        >
-          <Text style={styles.backToCategoriesText}>‹ Kategorilere Dön</Text>
-          <Text style={styles.currentCategoryBadge}>{selectedCatObj.icon} {selectedCatObj.label}</Text>
-        </Pressable>
-      </View>
-
       {/* Selected Category Qari Horizontal List */}
       <View style={styles.qarisSection}>
         <Text style={styles.qariSelectHeader}>
@@ -395,8 +382,22 @@ export default function KarilerScreen() {
       {/* Player Bar (Always accessible if active) */}
       {renderNowPlayingPlayer()}
 
-      {/* DURUM 1: Ana Ekranda Sadece Kategoriler Görünür */}
-      {!selectedCategory ? (
+      {/* Kategori Aç / Kapat Düğmesi (Varsayılan Olarak Gizli, Tıklanınca Açılır) */}
+      <View style={styles.categoryListHeader}>
+        <Pressable
+          style={styles.backToCategoriesBtn}
+          onPress={() => setCategoriesVisible(!categoriesVisible)}
+        >
+          <Text style={styles.backToCategoriesText}>
+            {categoriesVisible ? '▴ Kategorileri Gizle' : '📂 Kategoriler (Tıkla Aç ▾)'}
+          </Text>
+          <Text style={styles.currentCategoryBadge}>
+            {selectedCatObj.icon} {selectedCatObj.label}
+          </Text>
+        </Pressable>
+      </View>
+
+      {categoriesVisible ? (
         <FlatList
           data={categories}
           keyExtractor={(item) => item.key}
@@ -404,7 +405,7 @@ export default function KarilerScreen() {
           ListHeaderComponent={
             <View style={styles.categoryMenuHeader}>
               <Text style={styles.categoryMenuTitle}>📑 KÂRİLER & KIRAAT KATEGORİLERİ</Text>
-              <Text style={styles.categoryMenuSubtitle}>Dinlemek istediğiniz okuyucu grubu için bir kategori seçin:</Text>
+              <Text style={styles.categoryMenuSubtitle}>Dinlemek istediğiniz okuyucu grubu için bir kategoriye tıklayın:</Text>
             </View>
           }
           renderItem={({ item: cat }) => {
@@ -413,6 +414,7 @@ export default function KarilerScreen() {
                 style={styles.categoryMenuCard}
                 onPress={() => {
                   setSelectedCategory(cat.key);
+                  setCategoriesVisible(false);
                   const firstInCat = qarisList.find(q => cat.key === 'Tümü' || q.category === cat.key);
                   if (firstInCat) setSelectedQari(firstInCat);
                 }}
@@ -432,7 +434,6 @@ export default function KarilerScreen() {
           }}
         />
       ) : (
-        /* DURUM 2: Bir Kategoriye Tıklandığında Kâriler ve 114 Sure Görünür */
         <FlatList
           data={filteredSurahs}
           keyExtractor={(item) => item.code}

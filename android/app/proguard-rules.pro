@@ -7,8 +7,28 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# react-native-reanimated
--keep class com.swmansion.reanimated.** { *; }
--keep class com.facebook.react.turbomodule.** { *; }
+# React Native & Hermes & JNI
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.jni.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.soloader.** { *; }
 
-# Add any project specific keep options here:
+# Expo Modules (expo-video, expo-audio, expo-router, etc.)
+-keep class expo.modules.** { *; }
+-keepclassmembers class * {
+    @expo.modules.core.interfaces.ExpoProp *;
+    @expo.modules.core.interfaces.ExpoMethod *;
+}
+
+# AndroidX Media3 (used by expo-video & expo-audio)
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+
+# react-native-reanimated & gesture-handler & screens
+-keep class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.gesturehandler.** { *; }
+-keep class com.swmansion.rnscreens.** { *; }
+-keep class com.th3rdwave.safeareacontext.** { *; }
+
+-dontwarn com.facebook.react.**
+-dontwarn expo.modules.**
